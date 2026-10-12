@@ -64,3 +64,31 @@ class EvidenceFile:
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
+
+
+@dataclass(frozen=True)
+class Context:
+    project: str
+    task: str
+    module: str
+    files: List[EvidenceFile]
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Context":
+        if not isinstance(data, dict):
+            raise GuideError("Context must be an object")
+        files = data.get("files")
+        if not isinstance(files, list) or not files:
+            raise GuideError("Context must contain at least one evidence file")
+        parsed = [EvidenceFile.from_dict(item) for item in files]
+        paths = [item.path for item in parsed]
+        if len(set(paths)) != len(paths):
+            raise GuideError("Evidence paths must be unique")
+        module = data.get("module", "")
+        if not isinstance(module, str):
+            raise GuideError("module must be a string")
+        return cls(required_text(data.get("project"), "project"),
+                   required_text(data.get("task"), "task"), module.strip(), parsed)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
