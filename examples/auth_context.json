@@ -1,0 +1,234 @@
+{
+  "project": "auth_demo",
+  "task": "Help a new developer update login error handling in the authentication module",
+  "module": "app",
+  "files": [
+    {
+      "path": "README.md",
+      "role_hint": "project and local setup documentation",
+      "lines": {
+        "1": "# Demo authentication service",
+        "2": "",
+        "3": "This small FastAPI app issues a signed session token after a username and password are verified.",
+        "4": "The demo login is `ada` / `demo-password`.",
+        "5": "",
+        "6": "## Local setup",
+        "7": "",
+        "8": "1. Create a Python 3.11 virtual environment.",
+        "9": "2. Install dependencies with `pip install -r requirements.txt`.",
+        "10": "3. Set `SESSION_SECRET` in the environment.",
+        "11": "4. Start the app with `uvicorn app.routes:app --reload`.",
+        "12": "5. Run tests with `pytest`.",
+        "13": "",
+        "14": "The demo uses an in-memory user table in `app/db.py`; replace it with a real data store for production work."
+      },
+      "symbols": [],
+      "imports": []
+    },
+    {
+      "path": "requirements.txt",
+      "role_hint": "dependency and development configuration",
+      "lines": {
+        "1": "fastapi",
+        "2": "uvicorn",
+        "3": "pytest"
+      },
+      "symbols": [],
+      "imports": []
+    },
+    {
+      "path": "app/routes.py",
+      "role_hint": "API route or controller",
+      "lines": {
+        "1": "\"\"\"HTTP login endpoint.\"\"\"",
+        "2": "",
+        "3": "from fastapi import FastAPI, HTTPException",
+        "4": "",
+        "5": "from .auth import authenticate, create_session",
+        "6": "from .models import LoginRequest, LoginResponse",
+        "7": "",
+        "8": "app = FastAPI()",
+        "9": "",
+        "10": "",
+        "11": "@app.post(\"/login\", response_model=LoginResponse)",
+        "12": "def login(payload: LoginRequest):",
+        "13": "    user = authenticate(payload.username, payload.password)",
+        "14": "    if user is None:",
+        "15": "        raise HTTPException(status_code=401, detail=\"Invalid credentials\")",
+        "16": "    return LoginResponse(access_token=create_session(user[\"id\"]))"
+      },
+      "symbols": [
+        {
+          "name": "POST /login",
+          "kind": "route",
+          "line": 11
+        },
+        {
+          "name": "login",
+          "kind": "function",
+          "line": 12
+        }
+      ],
+      "imports": [
+        ".auth",
+        ".models",
+        "fastapi"
+      ]
+    },
+    {
+      "path": "app/auth.py",
+      "role_hint": "application source",
+      "lines": {
+        "1": "\"\"\"Credential checks and signed session creation.\"\"\"",
+        "2": "",
+        "3": "import hashlib",
+        "4": "import hmac",
+        "5": "import os",
+        "6": "",
+        "7": "from .db import get_user",
+        "8": "",
+        "9": "",
+        "10": "def verify_password(password: str, expected_hash: str) -> bool:",
+        "11": "    supplied = hashlib.sha256(password.encode()).hexdigest()",
+        "12": "    return hmac.compare_digest(supplied, expected_hash)",
+        "13": "",
+        "14": "",
+        "15": "def authenticate(username: str, password: str):",
+        "16": "    user = get_user(username)",
+        "17": "    if not user or not verify_password(password, user[\"password_hash\"]):",
+        "18": "        return None",
+        "20": "",
+        "21": "",
+        "22": "def create_session(user_id: int) -> str:",
+        "23": "    secret = [REDACTED]SESSION_SECRET\"]",
+        "24": "    message = str(user_id).encode()",
+        "25": "    signature = hmac.new(secret.encode(), message, hashlib.sha256).hexdigest()"
+      },
+      "symbols": [
+        {
+          "name": "verify_password",
+          "kind": "function",
+          "line": 10
+        },
+        {
+          "name": "authenticate",
+          "kind": "function",
+          "line": 15
+        },
+        {
+          "name": "create_session",
+          "kind": "function",
+          "line": 22
+        }
+      ],
+      "imports": [
+        ".db",
+        "hashlib",
+        "hmac",
+        "os"
+      ]
+    },
+    {
+      "path": "app/models.py",
+      "role_hint": "data model or schema",
+      "lines": {
+        "1": "from pydantic import BaseModel",
+        "2": "",
+        "3": "",
+        "4": "class LoginRequest(BaseModel):",
+        "5": "    username: str",
+        "6": "    password: str",
+        "7": "",
+        "8": "",
+        "9": "class LoginResponse(BaseModel):",
+        "10": "    access_token: str",
+        "11": "    token_type: str = \"bearer\""
+      },
+      "symbols": [
+        {
+          "name": "LoginRequest",
+          "kind": "class",
+          "line": 4
+        },
+        {
+          "name": "LoginResponse",
+          "kind": "class",
+          "line": 9
+        }
+      ],
+      "imports": [
+        "pydantic"
+      ]
+    },
+    {
+      "path": "app/__init__.py",
+      "role_hint": "application source",
+      "lines": {
+        "1": "\"\"\"Demo authentication app.\"\"\""
+      },
+      "symbols": [],
+      "imports": []
+    },
+    {
+      "path": "app/db.py",
+      "role_hint": "application source",
+      "lines": {
+        "1": "\"\"\"In-memory user records for the demo.\"\"\"",
+        "2": "",
+        "3": "USERS = {\"ada\": {\"id\": 1, \"password_hash\": \"41bd876b085d6031cb0e04de35b88d77f83a4ba39f879fee40805ac19e356023\"}}",
+        "4": "",
+        "5": "",
+        "6": "def get_user(username: str):",
+        "7": "    return USERS.get(username)"
+      },
+      "symbols": [
+        {
+          "name": "get_user",
+          "kind": "function",
+          "line": 6
+        }
+      ],
+      "imports": []
+    },
+    {
+      "path": "tests/test_auth.py",
+      "role_hint": "tests and expected behavior",
+      "lines": {
+        "1": "from app.auth import authenticate, create_session",
+        "2": "",
+        "3": "",
+        "4": "def test_invalid_user_cannot_authenticate():",
+        "5": "    assert authenticate(\"missing\", \"password\") is None",
+        "6": "",
+        "7": "",
+        "8": "def test_valid_demo_user_authenticates():",
+        "9": "    assert authenticate(\"ada\", \"demo-password\")[\"id\"] == 1",
+        "10": "",
+        "11": "",
+        "12": "def test_session_contains_user_id(monkeypatch):",
+        "13": "    monkeypatch.setenv(\"SESSION_SECRET\", \"test-secret\")",
+        "14": "    assert create_session(1).startswith(\"1.\")"
+      },
+      "symbols": [
+        {
+          "name": "test_invalid_user_cannot_authenticate",
+          "kind": "function",
+          "line": 4
+        },
+        {
+          "name": "test_valid_demo_user_authenticates",
+          "kind": "function",
+          "line": 8
+        },
+        {
+          "name": "test_session_contains_user_id",
+          "kind": "function",
+          "line": 12
+        }
+      ],
+      "imports": [
+        "app.auth"
+      ]
+    }
+  ]
+}
