@@ -9,3 +9,7 @@ from .models import Claim, Guide
 def citation_link(citation: str) -> str:
     path, line = citation.rsplit(":", 1)
     return "[{}:{}]({}#L{})".format(path, line, quote(path, safe="/"), line)
+
+
+def cite(citations) -> str:
+    return " ".join(citation_link(item) for item in citations)
