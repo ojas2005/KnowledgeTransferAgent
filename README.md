@@ -67,3 +67,11 @@ The scanner defaults to at most 18 files, 60,000 excerpt characters, and 200 KB 
 
 This is an orientation aid, not a full static analyzer. Dynamic imports, generated code, runtime configuration, and behavior outside the selected files may be missed. Citations prove the model referenced supplied lines; they do not prove every inference is correct. Confirm important details in the source before changing code.
 
+## Development
+
+```bash
+PYTHONPATH=src python3 -m unittest discover -s tests -v
+```
+
+The package uses the Python standard library at runtime. The demo app has separate optional dependencies listed in `examples/auth_demo/requirements.txt`.
+
