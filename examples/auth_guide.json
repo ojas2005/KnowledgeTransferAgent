@@ -1,0 +1,176 @@
+{
+  "title": "Authentication module onboarding: login errors",
+  "task_summary": "Help a new developer update login error handling in the authentication module",
+  "module_overview": {
+    "text": "The login route checks credentials and returns a signed session token on success.",
+    "citations": [
+      "app/routes.py:11",
+      "app/routes.py:13",
+      "app/routes.py:16"
+    ]
+  },
+  "relevant_files": [
+    {
+      "path": "app/routes.py",
+      "responsibility": "Defines the HTTP login handler and its 401 response",
+      "task_relevance": "Change the client-visible error here",
+      "citations": [
+        "app/routes.py:11"
+      ]
+    },
+    {
+      "path": "app/auth.py",
+      "responsibility": "Verifies passwords and creates session tokens",
+      "task_relevance": "Check the failure result before changing error handling",
+      "citations": [
+        "app/auth.py:15"
+      ]
+    },
+    {
+      "path": "app/models.py",
+      "responsibility": "Defines request and response models",
+      "task_relevance": "Confirm the current login response shape",
+      "citations": [
+        "app/models.py:4"
+      ]
+    },
+    {
+      "path": "app/db.py",
+      "responsibility": "Looks up demo users from an in-memory table",
+      "task_relevance": "Understand where the credential check gets its record",
+      "citations": [
+        "app/db.py:6"
+      ]
+    },
+    {
+      "path": "tests/test_auth.py",
+      "responsibility": "Tests credential and session behavior",
+      "task_relevance": "Extend coverage for the desired error behavior",
+      "citations": [
+        "tests/test_auth.py:4"
+      ]
+    },
+    {
+      "path": "README.md",
+      "responsibility": "Documents local setup",
+      "task_relevance": "Use these commands to run the demo",
+      "citations": [
+        "README.md:6"
+      ]
+    }
+  ],
+  "flow": [
+    {
+      "text": "POST /login receives a LoginRequest and passes its username and password to authenticate.",
+      "citations": [
+        "app/routes.py:11",
+        "app/routes.py:12",
+        "app/routes.py:13"
+      ]
+    },
+    {
+      "text": "authenticate looks up the user, compares the supplied password hash, and returns None on failure.",
+      "citations": [
+        "app/auth.py:15",
+        "app/auth.py:16",
+        "app/auth.py:17",
+        "app/auth.py:18"
+      ]
+    },
+    {
+      "text": "The route raises HTTP 401 for None and otherwise returns a LoginResponse with a session token.",
+      "citations": [
+        "app/routes.py:14",
+        "app/routes.py:15",
+        "app/routes.py:16"
+      ]
+    }
+  ],
+  "api_dependencies": [
+    {
+      "text": "The handler is registered as POST /login with LoginResponse as its response model.",
+      "citations": [
+        "app/routes.py:11"
+      ]
+    },
+    {
+      "text": "LoginRequest requires username and password; LoginResponse includes access_token and bearer token_type.",
+      "citations": [
+        "app/models.py:4",
+        "app/models.py:5",
+        "app/models.py:6",
+        "app/models.py:9",
+        "app/models.py:10",
+        "app/models.py:11"
+      ]
+    }
+  ],
+  "database_relationships": [
+    {
+      "text": "The demo stores users in a Python dictionary and get_user performs a username lookup.",
+      "citations": [
+        "app/db.py:1",
+        "app/db.py:3",
+        "app/db.py:6",
+        "app/db.py:7"
+      ]
+    }
+  ],
+  "conventions": [
+    {
+      "text": "Authentication failures return None from authenticate and become HTTP 401 in the route.",
+      "citations": [
+        "app/auth.py:17",
+        "app/auth.py:18",
+        "app/routes.py:14",
+        "app/routes.py:15"
+      ]
+    },
+    {
+      "text": "Session signing reads SESSION_SECRET from the environment.",
+      "citations": [
+        "app/auth.py:22",
+        "app/auth.py:23",
+        "app/auth.py:25"
+      ]
+    }
+  ],
+  "local_setup": [
+    {
+      "text": "Create a Python 3.11 environment and install requirements with pip.",
+      "citations": [
+        "README.md:8",
+        "README.md:9"
+      ]
+    },
+    {
+      "text": "Set SESSION_SECRET, run uvicorn app.routes:app --reload, then run pytest.",
+      "citations": [
+        "README.md:10",
+        "README.md:11",
+        "README.md:12"
+      ]
+    }
+  ],
+  "first_steps": [
+    {
+      "text": "Inspect the route 401 response and the None branch in authenticate before editing the error behavior.",
+      "citations": [
+        "app/routes.py:14",
+        "app/routes.py:15",
+        "app/auth.py:17",
+        "app/auth.py:18"
+      ]
+    },
+    {
+      "text": "Extend the existing authentication tests for the chosen behavior.",
+      "citations": [
+        "tests/test_auth.py:4",
+        "tests/test_auth.py:8"
+      ]
+    }
+  ],
+  "unknowns": [
+    "The selected files do not describe the desired replacement error wording or whether the response shape may change. Confirm those requirements with the task owner."
+  ]
+}
