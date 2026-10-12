@@ -69,3 +69,34 @@ def model_context(context: Context) -> Dict[str, Any]:
             for file in context.files
         ],
     }
+
+
+def validate_citations(guide: Guide, context: Context) -> None:
+    available = {file.path: set(file.lines) for file in context.files}
+
+    def check(citation: str) -> str:
+        if ":" not in citation:
+            raise GuideError("Citation must use path:line: {}".format(citation))
+        path, raw_line = citation.rsplit(":", 1)
+        try:
+            line = int(raw_line)
+        except ValueError as exc:
+            raise GuideError("Citation line must be a number: {}".format(citation)) from exc
+        if path not in available or line not in available[path]:
+            raise GuideError("Citation was not supplied as evidence: {}".format(citation))
+        return path
+
+    for claim in [guide.module_overview] + guide.flow + guide.api_dependencies + \
+            guide.database_relationships + guide.conventions + guide.local_setup + guide.first_steps:
+        for citation in claim.citations:
+            check(citation)
+    if not guide.relevant_files:
+        raise GuideError("Guide must name at least one relevant file")
+    seen = set()
+    for note in guide.relevant_files:
+        if note.path not in available or note.path in seen:
+            raise GuideError("Guide has an unknown or duplicate file: {}".format(note.path))
+        seen.add(note.path)
+        cited_paths = {check(citation) for citation in note.citations}
+        if note.path not in cited_paths:
+            raise GuideError("File note must cite its own file: {}".format(note.path))
