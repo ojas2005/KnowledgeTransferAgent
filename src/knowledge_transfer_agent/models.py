@@ -32,3 +32,35 @@ class Symbol:
             raise GuideError("Invalid symbol")
         return cls(required_text(data.get("name"), "symbol.name"),
                    required_text(data.get("kind"), "symbol.kind"), data["line"])
+
+
+@dataclass(frozen=True)
+class EvidenceFile:
+    path: str
+    role_hint: str
+    lines: Dict[int, str]
+    symbols: List[Symbol] = field(default_factory=list)
+    imports: List[str] = field(default_factory=list)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "EvidenceFile":
+        if not isinstance(data, dict) or not isinstance(data.get("lines"), dict):
+            raise GuideError("Invalid evidence file")
+        path = required_text(data.get("path"), "evidence.path")
+        if path.startswith("/") or ".." in path.split("/"):
+            raise GuideError("Evidence paths must be repository-relative")
+        lines = {}
+        for key, value in data["lines"].items():
+            try:
+                number = int(key)
+            except (TypeError, ValueError) as exc:
+                raise GuideError("Evidence line numbers must be integers") from exc
+            if number < 1 or not isinstance(value, str):
+                raise GuideError("Invalid evidence line in {}".format(path))
+            lines[number] = value
+        return cls(path, required_text(data.get("role_hint"), "evidence.role_hint"),
+                   lines, [Symbol.from_dict(item) for item in data.get("symbols", [])],
+                   strings(data.get("imports", []), "evidence.imports"))
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
