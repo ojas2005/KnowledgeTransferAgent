@@ -13,3 +13,13 @@ def citation_link(citation: str) -> str:
 
 def cite(citations) -> str:
     return " ".join(citation_link(item) for item in citations)
+
+
+def claims_section(lines, title: str, claims) -> None:
+    lines.extend(["## " + title, ""])
+    if claims:
+        for claim in claims:
+            lines.append("- {} {}".format(claim.text, cite(claim.citations)))
+    else:
+        lines.append("No evidence found in the selected files. See Unknowns.")
+    lines.append("")
