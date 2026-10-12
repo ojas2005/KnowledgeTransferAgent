@@ -127,3 +127,46 @@ class FileNote:
                    required_text(data.get("responsibility"), "file_note.responsibility"),
                    required_text(data.get("task_relevance"), "file_note.task_relevance"),
                    citations)
+
+
+@dataclass(frozen=True)
+class Guide:
+    title: str
+    task_summary: str
+    module_overview: Claim
+    relevant_files: List[FileNote]
+    flow: List[Claim]
+    api_dependencies: List[Claim]
+    database_relationships: List[Claim]
+    conventions: List[Claim]
+    local_setup: List[Claim]
+    first_steps: List[Claim]
+    unknowns: List[str]
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Guide":
+        if not isinstance(data, dict):
+            raise GuideError("Guide must be an object")
+
+        def claims(key: str) -> List[Claim]:
+            value = data.get(key)
+            if not isinstance(value, list):
+                raise GuideError("{} must be an array".format(key))
+            return [Claim.from_dict(item, key) for item in value]
+
+        files = data.get("relevant_files")
+        if not isinstance(files, list):
+            raise GuideError("relevant_files must be an array")
+        return cls(
+            title=required_text(data.get("title"), "title"),
+            task_summary=required_text(data.get("task_summary"), "task_summary"),
+            module_overview=Claim.from_dict(data.get("module_overview"), "module_overview"),
+            relevant_files=[FileNote.from_dict(item) for item in files],
+            flow=claims("flow"), api_dependencies=claims("api_dependencies"),
+            database_relationships=claims("database_relationships"),
+            conventions=claims("conventions"), local_setup=claims("local_setup"),
+            first_steps=claims("first_steps"), unknowns=strings(data.get("unknowns"), "unknowns"),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
