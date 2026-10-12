@@ -70,3 +70,11 @@ def script_hints(text: str) -> Tuple[List[Symbol], List[str]]:
         if route:
             symbols.append(Symbol("{} {}".format(route.group(1).upper(), route.group(2)), "route", number))
     return symbols, sorted(set(imports))
+
+
+def hints(path: Path, text: str) -> Tuple[List[Symbol], List[str]]:
+    if path.suffix == ".py":
+        return python_hints(text)
+    if path.suffix in {".js", ".jsx", ".ts", ".tsx", ".prisma", ".sql"}:
+        return script_hints(text)
+    return [], []
