@@ -56,3 +56,14 @@ knowledge-transfer validate \
   --markdown examples/auth_demo/ONBOARDING.md
 ```
 
+## How it works
+
+1. The scanner walks supported source and documentation files, skipping dependencies, build output, symlinks, common credential files, and large files.
+2. Task words, module focus, setup files, and source hints rank the files. Python AST and lightweight JavaScript, TypeScript, Prisma, and SQL patterns provide symbol hints. Selected excerpts retain original line numbers.
+3. The guide generator sends only the selected context to the Responses API using a strict JSON schema. Its request sets `store: false`.
+4. The validator requires every guide claim to cite a supplied `path:line` and every file note to cite its own file. Markdown rendering links those citations to source lines.
+
+The scanner defaults to at most 18 files, 60,000 excerpt characters, and 200 KB per file. Use `--max-files` and `--max-chars` to adjust the first two limits. Source snippets are truncated to 500 characters per line. Obvious literal credentials are redacted, but this is a best-effort filter. Review `context.json` before using a private or sensitive repository. Do not include secrets in tasks or source sent to the model.
+
+This is an orientation aid, not a full static analyzer. Dynamic imports, generated code, runtime configuration, and behavior outside the selected files may be missed. Citations prove the model referenced supplied lines; they do not prove every inference is correct. Confirm important details in the source before changing code.
+
