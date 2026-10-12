@@ -59,3 +59,40 @@ def scan_context(args) -> Context:
     if not args.task:
         raise GuideError("--task is required with --repo")
     return RepositoryScanner(args.repo, args.max_files, args.max_chars).scan(args.task, args.module)
+
+
+def main(argv=None) -> int:
+    args = parser().parse_args(argv)
+    try:
+        if args.command == "scan":
+            context = scan_context(args)
+            output = json.dumps(context.to_dict(), indent=2, ensure_ascii=False) + "\n"
+            if args.out:
+                write(args.out, output)
+            else:
+                print(output, end="")
+            return 0
+        if args.command == "generate":
+            context = load_context(args.context) if args.context else scan_context(args)
+            client = OpenAIResponsesClient(args.model)
+            guide = KnowledgeTransferAgent(client).generate(context)
+            markdown = render_markdown(guide)
+            if args.markdown:
+                write(args.markdown, markdown)
+            else:
+                print(markdown, end="")
+            if args.json:
+                write(args.json, render_json(guide))
+            return 0
+        context = load_context(args.context)
+        guide = Guide.from_dict(json.loads(args.guide.read_text(encoding="utf-8")))
+        validate_citations(guide, context)
+        markdown = render_markdown(guide)
+        if args.markdown:
+            write(args.markdown, markdown)
+        else:
+            print(markdown, end="")
+        return 0
+    except (GuideError, ModelError, OSError, json.JSONDecodeError) as exc:
+        print("knowledge-transfer: {}".format(exc), file=sys.stderr)
+        return 1
