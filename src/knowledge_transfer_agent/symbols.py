@@ -48,3 +48,25 @@ def python_hints(text: str) -> Tuple[List[Symbol], List[str]]:
                 if isinstance(target, str):
                     symbols.append(Symbol(target, "foreign-key", node.lineno))
     return sorted(symbols, key=lambda item: item.line), sorted(set(imports))
+
+
+def script_hints(text: str) -> Tuple[List[Symbol], List[str]]:
+    symbols = []
+    imports = []
+    for number, line in enumerate(text.splitlines(), 1):
+        for match in re.finditer(r"\b(?:import|export)\b.*?\bfrom\s*['\"]([^'\"]+)['\"]", line):
+            imports.append(match.group(1))
+        for pattern, kind in [
+            (r"\b(?:export\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)", "function"),
+            (r"\b(?:export\s+)?class\s+([A-Za-z_$][\w$]*)", "class"),
+            (r"\b(?:export\s+)?(?:const|let)\s+([A-Za-z_$][\w$]*)", "binding"),
+            (r"\bmodel\s+([A-Za-z_][\w]*)\s*\{", "database-model"),
+            (r"\bCREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\w.\"`]+)", "database-table"),
+        ]:
+            match = re.search(pattern, line, re.IGNORECASE if kind == "database-table" else 0)
+            if match:
+                symbols.append(Symbol(match.group(1), kind, number))
+        route = re.search(r"\b(?:router|app)\.(get|post|put|patch|delete)\(\s*['\"]([^'\"]+)", line)
+        if route:
+            symbols.append(Symbol("{} {}".format(route.group(1).upper(), route.group(2)), "route", number))
+    return symbols, sorted(set(imports))
