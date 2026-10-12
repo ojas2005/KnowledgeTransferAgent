@@ -124,3 +124,59 @@ def selected_lines(text: str, terms: Set[str], symbols, path: Path,
         selected[index + 1] = line
         used += cost
     return dict(sorted(selected.items()))
+
+
+class RepositoryScanner:
+    def __init__(self, root: Path, max_files: int = 18, max_chars: int = 60000,
+                 max_file_bytes: int = 200000):
+        self.root = Path(root).resolve()
+        self.max_files = max_files
+        self.max_chars = max_chars
+        self.max_file_bytes = max_file_bytes
+        if not self.root.is_dir():
+            raise GuideError("Repository directory does not exist: {}".format(self.root))
+        if max_files < 1 or max_chars < 1000 or max_file_bytes < 1000:
+            raise GuideError("Scanner limits must be positive and large enough for source excerpts")
+
+    def scan(self, task: str, module: str = "") -> Context:
+        if not isinstance(task, str) or not task.strip():
+            raise GuideError("Assigned task must be nonempty")
+        terms = task_terms(task, module)
+        candidates: List[Tuple[int, str, Path, str]] = []
+        for path in iter_files(self.root, self.max_file_bytes):
+            try:
+                text = path.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            if "\x00" in text:
+                continue
+            relative = path.relative_to(self.root).as_posix()
+            candidates.append((score_file(Path(relative), text, terms, module), relative, path, text))
+        if not candidates:
+            raise GuideError("No supported source or documentation files found")
+        setup = sorted((item for item in candidates if Path(item[1]).name in SETUP_NAMES),
+                       key=lambda item: (-item[0], item[1]))[:3]
+        rest = sorted(candidates, key=lambda item: (-item[0], item[1]))
+        chosen = []
+        used_paths = set()
+        for item in setup + rest:
+            if item[1] not in used_paths:
+                chosen.append(item)
+                used_paths.add(item[1])
+            if len(chosen) >= self.max_files:
+                break
+        remaining = self.max_chars
+        files = []
+        for _, relative, path, text in chosen:
+            symbols, imports = hints(Path(relative), text)
+            budget = min(6000, remaining)
+            if budget < 300:
+                break
+            lines = selected_lines(text, terms, symbols, Path(relative), budget)
+            if not lines:
+                continue
+            remaining -= sum(len(line) + 20 for line in lines.values())
+            files.append(EvidenceFile(relative, role_hint(Path(relative)), lines, symbols[:40], imports[:30]))
+        if not files:
+            raise GuideError("No readable evidence remained after applying limits")
+        return Context(self.root.name, task.strip(), module.strip(), files)
