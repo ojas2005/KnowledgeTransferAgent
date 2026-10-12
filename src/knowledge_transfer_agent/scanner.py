@@ -45,3 +45,21 @@ def task_terms(task: str, module: str = "") -> Set[str]:
     for term in terms:
         expanded.update(SYNONYMS.get(term, set()))
     return expanded
+
+
+def eligible(path: Path, root: Path, max_bytes: int) -> bool:
+    if path.is_symlink() or not path.is_file():
+        return False
+    relative = path.relative_to(root)
+    if any(part in SKIP_DIRS for part in relative.parts[:-1]):
+        return False
+    if path.name in SENSITIVE_NAMES or path.suffix.lower() in {".pem", ".key", ".p12", ".pfx"}:
+        return False
+    if path.name.startswith(".env") and path.name != ".env.example":
+        return False
+    if path.suffix.lower() not in EXTENSIONS and path.name not in SPECIAL_NAMES:
+        return False
+    try:
+        return path.stat().st_size <= max_bytes
+    except OSError:
+        return False
