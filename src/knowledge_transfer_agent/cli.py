@@ -96,3 +96,7 @@ def main(argv=None) -> int:
     except (GuideError, ModelError, OSError, json.JSONDecodeError) as exc:
         print("knowledge-transfer: {}".format(exc), file=sys.stderr)
         return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
