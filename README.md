@@ -4,3 +4,37 @@ Create a developer onboarding guide for a **specific assigned task** from a repo
 
 A guide covers the module overview, relevant files, execution flow, API dependencies, database relationships, conventions, local setup, and first steps for the task. Sections without evidence stay empty and are called out as unknowns.
 
+## Quick start
+
+Requires Python 3.9+ and an OpenAI API key for guide generation. Scanning and validation work offline.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+export OPENAI_API_KEY=your_key
+export OPENAI_MODEL=your_structured_outputs_model
+knowledge-transfer generate \
+  --repo /path/to/project \
+  --task "Help a new developer update login error handling" \
+  --module app/auth \
+  --markdown /path/to/project/ONBOARDING.md \
+  --json guide.json
+```
+
+The Markdown file is best saved in the repository root: source links in the guide are relative to that root. `--module` can be a module name or path fragment; it increases the ranking of related files.
+
+To inspect what would be sent to the model first:
+
+```bash
+knowledge-transfer scan \
+  --repo /path/to/project \
+  --task "Update login error handling" \
+  --module app/auth \
+  --out context.json
+knowledge-transfer generate --context context.json --markdown ONBOARDING.md
+knowledge-transfer validate --context context.json --guide guide.json
+```
+
+`generate --context` still needs `OPENAI_API_KEY` and `OPENAI_MODEL` (or `--model`). `validate` checks a saved guide without an API call. To keep the machine-readable result, pass `--json` when generating. The tool exits with a nonzero status and an error message for invalid evidence, model failures, or unsupported citations.
+
