@@ -36,3 +36,12 @@ SECRET_ASSIGNMENT = re.compile(
 def redact_line(line: str) -> str:
     """Keep useful source context without sending obvious literal credentials."""
     return SECRET_ASSIGNMENT.sub(lambda match: match.group(1) + "[REDACTED]", line)
+
+
+def task_terms(task: str, module: str = "") -> Set[str]:
+    terms = {term.lower() for term in re.findall(r"[A-Za-z][A-Za-z0-9_]+", task + " " + module)}
+    terms -= STOPWORDS
+    expanded = set(terms)
+    for term in terms:
+        expanded.update(SYNONYMS.get(term, set()))
+    return expanded
