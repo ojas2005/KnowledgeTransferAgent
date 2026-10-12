@@ -49,3 +49,7 @@ def parser():
 def write(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
+
+
+def load_context(path: Path) -> Context:
+    return Context.from_dict(json.loads(path.read_text(encoding="utf-8")))
