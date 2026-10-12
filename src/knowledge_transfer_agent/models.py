@@ -92,3 +92,18 @@ class Context:
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
+
+
+@dataclass(frozen=True)
+class Claim:
+    text: str
+    citations: List[str]
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any], label: str) -> "Claim":
+        if not isinstance(data, dict):
+            raise GuideError("{} must be an object".format(label))
+        citations = strings(data.get("citations"), label + ".citations")
+        if not citations:
+            raise GuideError("{} requires at least one citation".format(label))
+        return cls(required_text(data.get("text"), label + ".text"), citations)
