@@ -63,3 +63,13 @@ def eligible(path: Path, root: Path, max_bytes: int) -> bool:
         return path.stat().st_size <= max_bytes
     except OSError:
         return False
+
+
+def iter_files(root: Path, max_bytes: int) -> Iterable[Path]:
+    for folder, directories, filenames in os.walk(root, followlinks=False):
+        directories[:] = sorted(name for name in directories
+                                if name not in SKIP_DIRS and not (Path(folder) / name).is_symlink())
+        for name in sorted(filenames):
+            path = Path(folder) / name
+            if eligible(path, root, max_bytes):
+                yield path
