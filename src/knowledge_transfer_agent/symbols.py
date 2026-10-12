@@ -78,3 +78,25 @@ def hints(path: Path, text: str) -> Tuple[List[Symbol], List[str]]:
     if path.suffix in {".js", ".jsx", ".ts", ".tsx", ".prisma", ".sql"}:
         return script_hints(text)
     return [], []
+
+
+def role_hint(path: Path) -> str:
+    name = path.name.lower()
+    parts = {part.lower() for part in path.parts}
+    if name.startswith("readme") or name in {"contributing.md", "makefile", "dockerfile"}:
+        return "project and local setup documentation"
+    if name in {"package.json", "pyproject.toml", "requirements.txt", "go.mod", "cargo.toml"}:
+        return "dependency and development configuration"
+    if name.endswith(".prisma") or name.endswith(".sql") or "migrations" in parts:
+        return "database schema or migration"
+    if "test" in name or "tests" in parts or "spec" in name:
+        return "tests and expected behavior"
+    if "route" in name or "controller" in name or "api" in parts:
+        return "API route or controller"
+    if "model" in name or "schema" in name:
+        return "data model or schema"
+    if "service" in name:
+        return "service logic"
+    if path.suffix in {".tsx", ".jsx"}:
+        return "frontend component"
+    return "application source"
