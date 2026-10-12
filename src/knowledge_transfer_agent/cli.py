@@ -53,3 +53,9 @@ def write(path: Path, content: str) -> None:
 
 def load_context(path: Path) -> Context:
     return Context.from_dict(json.loads(path.read_text(encoding="utf-8")))
+
+
+def scan_context(args) -> Context:
+    if not args.task:
+        raise GuideError("--task is required with --repo")
+    return RepositoryScanner(args.repo, args.max_files, args.max_chars).scan(args.task, args.module)
