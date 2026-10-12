@@ -75,3 +75,6 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 
 The package uses the Python standard library at runtime. The demo app has separate optional dependencies listed in `examples/auth_demo/requirements.txt`.
 
+## License
+
+MIT. See [LICENSE](LICENSE).
