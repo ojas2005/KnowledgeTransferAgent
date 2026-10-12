@@ -44,3 +44,8 @@ def parser():
     validate.add_argument("--guide", required=True, type=Path)
     validate.add_argument("--markdown", type=Path, help="Write Markdown guide")
     return top
+
+
+def write(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
