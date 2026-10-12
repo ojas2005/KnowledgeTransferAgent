@@ -90,3 +90,37 @@ def score_file(path: Path, text: str, terms: Set[str], module: str) -> int:
     if "test" in relative or "spec" in relative:
         score += 2
     return score
+
+
+def selected_lines(text: str, terms: Set[str], symbols, path: Path,
+                   max_chars: int) -> Dict[int, str]:
+    lines = text.splitlines()
+    candidates: List[int] = []
+    seen = set()
+
+    def add(index: int) -> None:
+        if 0 <= index < len(lines) and index not in seen:
+            seen.add(index)
+            candidates.append(index)
+
+    for index, line in enumerate(lines):
+        lower = line.lower()
+        if any(term in lower for term in terms):
+            for nearby in range(index - 2, index + 3):
+                add(nearby)
+    for symbol in symbols:
+        for nearby in range(symbol.line - 2, symbol.line + 2):
+            add(nearby)
+    header = 55 if path.name in SETUP_NAMES or path.suffix == ".md" else 18
+    for index in range(min(header, len(lines))):
+        add(index)
+    selected: Dict[int, str] = {}
+    used = 0
+    for index in candidates:
+        line = redact_line(lines[index][:500])
+        cost = len(line) + 20
+        if used + cost > max_chars:
+            continue
+        selected[index + 1] = line
+        used += cost
+    return dict(sorted(selected.items()))
