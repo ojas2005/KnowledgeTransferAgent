@@ -107,3 +107,23 @@ class Claim:
         if not citations:
             raise GuideError("{} requires at least one citation".format(label))
         return cls(required_text(data.get("text"), label + ".text"), citations)
+
+
+@dataclass(frozen=True)
+class FileNote:
+    path: str
+    responsibility: str
+    task_relevance: str
+    citations: List[str]
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "FileNote":
+        if not isinstance(data, dict):
+            raise GuideError("file note must be an object")
+        citations = strings(data.get("citations"), "file_note.citations")
+        if not citations:
+            raise GuideError("file note requires at least one citation")
+        return cls(required_text(data.get("path"), "file_note.path"),
+                   required_text(data.get("responsibility"), "file_note.responsibility"),
+                   required_text(data.get("task_relevance"), "file_note.task_relevance"),
+                   citations)
