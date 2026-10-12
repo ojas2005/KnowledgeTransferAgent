@@ -73,3 +73,20 @@ def iter_files(root: Path, max_bytes: int) -> Iterable[Path]:
             path = Path(folder) / name
             if eligible(path, root, max_bytes):
                 yield path
+
+
+def score_file(path: Path, text: str, terms: Set[str], module: str) -> int:
+    relative = path.as_posix().lower()
+    lower = text.lower()
+    score = 0
+    for term in terms:
+        if term in relative:
+            score += 12
+        score += min(lower.count(term), 5) * 2
+    if module and module.lower() in relative:
+        score += 25
+    if path.name in SETUP_NAMES:
+        score += 8
+    if "test" in relative or "spec" in relative:
+        score += 2
+    return score
