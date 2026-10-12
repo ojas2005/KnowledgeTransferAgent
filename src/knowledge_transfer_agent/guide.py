@@ -52,3 +52,20 @@ GUIDE_SCHEMA = {
                  "first_steps", "unknowns"],
     "additionalProperties": False,
 }
+
+
+def model_context(context: Context) -> Dict[str, Any]:
+    return {
+        "project": context.project,
+        "assigned_task": context.task,
+        "module_focus": context.module,
+        "files": [
+            {"path": file.path, "role_hint": file.role_hint,
+             "symbols": [{"name": symbol.name, "kind": symbol.kind, "line": symbol.line}
+                         for symbol in file.symbols],
+             "imports": file.imports,
+             "excerpt": "\n".join("L{}: {}".format(line, value)
+                                  for line, value in file.lines.items())}
+            for file in context.files
+        ],
+    }
