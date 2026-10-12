@@ -50,3 +50,7 @@ def render_markdown(guide: Guide) -> str:
         lines.append("- None identified from the selected evidence.")
     lines.append("")
     return "\n".join(lines)
+
+
+def render_json(guide: Guide) -> str:
+    return json.dumps(guide.to_dict(), indent=2, ensure_ascii=False) + "\n"
