@@ -38,3 +38,21 @@ knowledge-transfer validate --context context.json --guide guide.json
 
 `generate --context` still needs `OPENAI_API_KEY` and `OPENAI_MODEL` (or `--model`). `validate` checks a saved guide without an API call. To keep the machine-readable result, pass `--json` when generating. The tool exits with a nonzero status and an error message for invalid evidence, model failures, or unsupported citations.
 
+## Worked example
+
+The [`auth_demo`](examples/auth_demo/README.md) directory contains a small authentication service. Its [scan context](examples/auth_context.json), [guide JSON](examples/auth_guide.json), and [onboarding guide](examples/auth_demo/ONBOARDING.md) show the full output format. The guide is a checked example built from the offline context; it is not presented as a live model result.
+
+Regenerate the evidence and validate the example:
+
+```bash
+knowledge-transfer scan \
+  --repo examples/auth_demo \
+  --task "Help a new developer update login error handling in the authentication module" \
+  --module app \
+  --out examples/auth_context.json
+knowledge-transfer validate \
+  --context examples/auth_context.json \
+  --guide examples/auth_guide.json \
+  --markdown examples/auth_demo/ONBOARDING.md
+```
+
